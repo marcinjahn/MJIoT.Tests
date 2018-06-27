@@ -59,7 +59,7 @@ namespace MjIot.EventsHandler.Tests
         {
             var connection = GenerateConnection(ConnectionFilter.Greater, filterValue);
 
-            Assert.Throws<Exception>(() => _filter.Modify(input, connection));
+            Assert.Throws<NotSupportedException>(() => _filter.Modify(input, connection));
         }
 
         [Theory]
@@ -89,7 +89,7 @@ namespace MjIot.EventsHandler.Tests
         {
             var connection = GenerateConnection(ConnectionFilter.GreaterOrEqual, filterValue);
 
-            Assert.Throws<Exception>(() => _filter.Modify(input, connection));
+            Assert.Throws<NotSupportedException>(() => _filter.Modify(input, connection));
         }
 
         [Theory]
@@ -120,7 +120,7 @@ namespace MjIot.EventsHandler.Tests
         {
             var connection = GenerateConnection(ConnectionFilter.Less, filterValue);
 
-            Assert.Throws<Exception>(() => _filter.Modify(input, connection));
+            Assert.Throws<NotSupportedException>(() => _filter.Modify(input, connection));
         }
 
         [Theory]
@@ -151,7 +151,7 @@ namespace MjIot.EventsHandler.Tests
         {
             var connection = GenerateConnection(ConnectionFilter.LessOrEqual, filterValue);
 
-            Assert.Throws<Exception>(() => _filter.Modify(input, connection));
+            Assert.Throws<NotSupportedException>(() => _filter.Modify(input, connection));
         }
 
         [Theory]
