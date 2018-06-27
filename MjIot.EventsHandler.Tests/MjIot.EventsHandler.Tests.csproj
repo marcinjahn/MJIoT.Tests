@@ -92,6 +92,10 @@
       <Project>{1e2fe2ed-392b-4780-bd0a-92f345d1cd85}</Project>
       <Name>MjIot.EventsHandler</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\MJIoT_ModelStorage\MjIot.Storage.Models.csproj">
+      <Project>{4D52EB12-BF57-433B-A595-CC8BBDD699C5}</Project>
+      <Name>MjIot.Storage.Models</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
