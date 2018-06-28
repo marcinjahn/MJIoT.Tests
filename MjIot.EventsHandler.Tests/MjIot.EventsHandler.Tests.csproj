@@ -19,7 +19,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>pdbonly</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -71,10 +71,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CalculationTests.cs" />
+    <Compile Include="EventHandlerFixture.cs" />
     <Compile Include="EventHandlerTests.cs" />
     <Compile Include="FilterTests.cs" />
     <Compile Include="MessageValidatorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PropertyDataMessageTests.cs" />
     <Compile Include="ValueFormatConverterTests.cs" />
   </ItemGroup>
   <ItemGroup>
