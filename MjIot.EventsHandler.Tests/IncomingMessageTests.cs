@@ -1,14 +1,10 @@
 ﻿using MjIot.EventsHandler.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace MjIot.EventsHandler.Tests
 {
-    public class PropertyDataMessageTests
+    public class IncomingMessageTests
     {
         [Theory]
         [InlineData("some text")]
@@ -17,7 +13,7 @@ namespace MjIot.EventsHandler.Tests
         public void Constructor_StringAsInput_CreatesCorrectObject(object value)
         {
             var stringInput = GetStringMessage(1, "Property1", value.ToString());
-            var obj = new PropertyDataMessage(stringInput);
+            var obj = new IncomingMessage(stringInput);
 
             Assert.Equal(1, obj.DeviceId);
             Assert.Equal("Property1", obj.PropertyName);
@@ -30,7 +26,7 @@ namespace MjIot.EventsHandler.Tests
         [InlineData(true)]
         public void Constructor_EachElementAsInput_CreatesCorrectObject(object value)
         {
-            var obj = new PropertyDataMessage(1, "Property1", value.ToString());
+            var obj = new IncomingMessage(1, "Property1", value.ToString());
 
             Assert.Equal(1, obj.DeviceId);
             Assert.Equal("Property1", obj.PropertyName);
@@ -43,7 +39,7 @@ namespace MjIot.EventsHandler.Tests
         [InlineData(@"{{DeviceId: ""abc"",PropertyName: ""Property1"",PropertyValue: ""4""}}")]
         public void Constructor_IncorrectStringAsInput_ThrowsException(string stringInput)
         {
-            Assert.Throws<Exception>(() => new PropertyDataMessage(stringInput));
+            Assert.Throws<Exception>(() => new IncomingMessage(stringInput));
         }
 
         private string GetStringMessage(int deviceId, string propertyName, string value)
@@ -57,7 +53,7 @@ namespace MjIot.EventsHandler.Tests
         [InlineData(null, "4")]
         public void Constructor_IncorrectElementsAsInput_ThrowsException(string propertyName, string value)
         {
-            Assert.Throws<ArgumentNullException>(() => new PropertyDataMessage(1, propertyName, value));
+            Assert.Throws<ArgumentNullException>(() => new IncomingMessage(1, propertyName, value));
         }
     }
 }

@@ -1,9 +1,4 @@
 ﻿using MjIot.Storage.Models.EF6Db;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MjIot.EventsHandler.Tests
 {
@@ -13,7 +8,8 @@ namespace MjIot.EventsHandler.Tests
         public DeviceType SenderDeviceType { get; private set; }
         public DeviceType OfflineEnabledListenerDeviceType { get; private set; }
         public DeviceType OfflineDisabledListenerDeviceType { get; private set; }
-        public Device SenderDevice { get; private set; }
+        public Device SenderDeviceWithProps { get; private set; }
+        public Device SenderDeviceWithoutProps { get; private set; }
         public Device OfflineEnabledListenerDevice { get; private set; }
         public Device OfflineDisabledListenerDevice { get; private set; }
         public PropertyType PropertyTypeOfSender { get; private set; }
@@ -33,7 +29,7 @@ namespace MjIot.EventsHandler.Tests
                 IsAbstract = false,
                 Name = "DeviceType1",
                 OfflineMessagesEnabled = true
-                //BaseDeviceType = 
+                //BaseDeviceType =
             };
             OfflineEnabledListenerDeviceType = new DeviceType
             {
@@ -51,12 +47,18 @@ namespace MjIot.EventsHandler.Tests
                 OfflineMessagesEnabled = false
             };
 
-            SenderDevice = new Device
+            SenderDeviceWithProps = new Device
             {
                 Id = 1,
                 IoTHubKey = "123",
                 User = User,
                 DeviceType = SenderDeviceType
+            };
+
+            SenderDeviceWithoutProps = new Device
+            {
+                Id = 1,
+                IoTHubKey = "123"
             };
 
             OfflineEnabledListenerDevice = new Device
@@ -112,7 +114,7 @@ namespace MjIot.EventsHandler.Tests
             {
                 Id = 1,
                 User = User,
-                SenderDevice = SenderDevice,
+                SenderDevice = SenderDeviceWithProps,
                 SenderProperty = PropertyTypeOfSender,
                 ListenerDevice = OfflineEnabledListenerDevice,
                 ListenerProperty = PropertyTypeOfOfflineEnabledListener,
@@ -124,7 +126,7 @@ namespace MjIot.EventsHandler.Tests
             {
                 Id = 2,
                 User = User,
-                SenderDevice = SenderDevice,
+                SenderDevice = SenderDeviceWithProps,
                 SenderProperty = PropertyTypeOfSender,
                 ListenerDevice = OfflineDisabledListenerDevice,
                 ListenerProperty = PropertyTypeOfOfflineDisabledListener,

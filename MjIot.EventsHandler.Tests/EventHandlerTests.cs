@@ -1,15 +1,13 @@
-﻿using System;
+﻿using MjIot.EventsHandler.Models;
+using MjIot.EventsHandler.Services;
+using MjIot.Storage.Models.EF6Db;
+using MJIot.Storage.Models;
+using MJIot.Storage.Models.Repositiories;
+using Moq;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
-using Moq;
-using MJIot.Storage.Models;
-using MjIot.EventsHandler.Services;
-using MJIot.Storage.Models.Repositiories;
-using MjIot.Storage.Models.EF6Db;
-using MjIot.EventsHandler.Models;
 
 namespace MjIot.EventsHandler.Tests
 {
@@ -39,7 +37,7 @@ namespace MjIot.EventsHandler.Tests
         [Fact]
         public void Constructor_SenderDeviceExists_NoExceptionIsThrown()
         {
-            var message = new PropertyDataMessage(1, "Property1", "false");
+            var message = new IncomingMessage(1, "Property1", "false");
 
             PropertyTypeRepositoryMock = new Mock<IPropertyTypeRepository>(MockBehavior.Loose);
             SetupDevicesRepositoryForSender();
@@ -60,29 +58,37 @@ namespace MjIot.EventsHandler.Tests
         [Fact]
         public void Constructor_SenderPropertyExists_NoExceptionIsThrown()
         {
-            //var message = new PropertyDataMessage(@"{DeviceId: ""1"",PropertyName: ""Property1"",PropertyValue: ""false""}");
-            var message = new PropertyDataMessage(1, "Property1", "false");
-            var mockedDeviceType = new DeviceType();
-            var mockedDevice = new Device { DeviceType = mockedDeviceType };
-            var mockedPropertyTypes = new PropertyType[]
-            {
-                new PropertyType {Name = "Property1"},
-                new PropertyType {Name = "Property2"},
-                new PropertyType {Name = "Property3"}
-            };
+            var message = new IncomingMessage(1, "Property1", "false");
 
-            DeviceRepositoryMock.Setup(n => n.Get(1)).Returns(mockedDevice);
-            PropertyTypeRepositoryMock.Setup(n => n.GetPropertiesOfDevice(mockedDeviceType)).Returns(mockedPropertyTypes);
-            UnitOfWorkMock.Setup(n => n.Devices).Returns(DeviceRepositoryMock.Object);
-            UnitOfWorkMock.Setup(n => n.PropertyTypes).Returns(PropertyTypeRepositoryMock.Object);
+            SetupDevicesRepositoryForSender();
+            SetupPropertyTypesRepositoryForSender();
 
             var handler = new EventHandler(message, UnitOfWorkMock.Object, IotServiceMock.Object, null);
         }
 
         [Fact]
+        public void Constructor_MessageFromNonExistingDevice_ThrowsException()
+        {
+            var message = new IncomingMessage(5, "Property1", "false");
+
+            DeviceRepositoryMock.Setup(n => n.Get(5)).Returns((Device)null);
+            UnitOfWorkMock.Setup(n => n.Devices).Returns(DeviceRepositoryMock.Object);
+
+            try
+            {
+                var handler = new EventHandler(message, UnitOfWorkMock.Object, IotServiceMock.Object, null);
+            }
+            catch (Exception e)
+            {
+                if (e.Message != "Sender device not found")
+                    Assert.True(false);
+            }
+        }
+
+        [Fact]
         public void Constructor_MessageFromNonExistingProperty_ThrowsException()
         {
-            var message = new PropertyDataMessage(1, "NonExistingProperty", "false");
+            var message = new IncomingMessage(1, "NonExistingProperty", "false");
 
             SetupDevicesRepositoryForSender();
             SetupPropertyTypesRepositoryForSender();
@@ -100,7 +106,7 @@ namespace MjIot.EventsHandler.Tests
 
         [Theory]
         [MemberData(nameof(GetWrongConstructorParameters))]
-        public void Constructor_NullParametersGiven_ThrowsArgumentNullException(PropertyDataMessage message, IUnitOfWork unitOfWork, IIotService iotService)
+        public void Constructor_NullParametersGiven_ThrowsArgumentNullException(IncomingMessage message, IUnitOfWork unitOfWork, IIotService iotService)
         {
             Assert.Throws<ArgumentNullException>(() => new EventHandler(message, unitOfWork, iotService, null));
         }
@@ -109,8 +115,10 @@ namespace MjIot.EventsHandler.Tests
         {
             yield return new object[] { null, null, null };
             yield return new object[] { null, new Mock<IUnitOfWork>().Object, null };
-            yield return new object[] { new PropertyDataMessage(), new Mock<IUnitOfWork>().Object, null };
+            yield return new object[] { new IncomingMessage(), new Mock<IUnitOfWork>().Object, null };
             yield return new object[] { null, new Mock<IUnitOfWork>().Object, new Mock<IIotService>().Object };
+            yield return new object[] { null, new Mock<IUnitOfWork>().Object, null };
+            yield return new object[] { new IncomingMessage(), null, null };
         }
 
         [Theory]
@@ -120,7 +128,7 @@ namespace MjIot.EventsHandler.Tests
         [InlineData(PropertyFormat.Boolean, "1")]
         public async void HandleMessage_IncorrectMessageValueFormatGiven_ThrowsException(PropertyFormat expectedFormat, string incomingValue)
         {
-            var message = new PropertyDataMessage(1, "Property1", incomingValue);
+            var message = new IncomingMessage(1, "Property1", incomingValue);
 
             SetupDevicesRepositoryForSender();
             SetupPropertyTypesRepositoryForSender();
@@ -132,7 +140,7 @@ namespace MjIot.EventsHandler.Tests
             {
                 await handler.HandleMessage();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (e.Message != $"Received value does not match the declared type of sender property! (DeviceId: { message.DeviceId }, Property: { message.PropertyName }, Value: { message.PropertyValue })")
                     Assert.True(false);
@@ -142,14 +150,13 @@ namespace MjIot.EventsHandler.Tests
         [Fact]
         public async void HandleMessage_MessageSentIsNotFromSenderProperty_ReturnsFalse()
         {
-            var message = new PropertyDataMessage(1, "Property1", "4");
+            var message = new IncomingMessage(1, "Property1", "4");
 
             SetupDevicesRepositoryForSender();
             SetupPropertyTypesRepositoryForSender();
             _fixture.PropertyTypeOfSender.IsSenderProperty = false;
 
             var handler = new EventHandler(message, UnitOfWorkMock.Object, IotServiceMock.Object, null);
-
             var result = await handler.HandleMessage();
 
             Assert.False(result);
@@ -158,7 +165,7 @@ namespace MjIot.EventsHandler.Tests
         [Fact]
         public async void HandleMessage_MessageSentIsFromSenderProperty_ReturnsTrue()
         {
-            var message = new PropertyDataMessage(1, "Property1", "4");
+            var message = new IncomingMessage(1, "Property1", "4");
 
             SetupDevicesRepositoryForSender();
             SetupPropertyTypesRepositoryForSender();
@@ -167,7 +174,6 @@ namespace MjIot.EventsHandler.Tests
             _fixture.PropertyTypeOfSender.IsSenderProperty = true;
 
             var handler = new EventHandler(message, UnitOfWorkMock.Object, IotServiceMock.Object, null);
-
             var result = await handler.HandleMessage();
 
             Assert.True(result);
@@ -176,7 +182,7 @@ namespace MjIot.EventsHandler.Tests
         [Fact]
         public async void HandleMessage_ListenerCanOnlyReceiveMessagesWhileBeingOnlineAndItIsOffline_MessageSendingIsNotExecuted()
         {
-            var message = new PropertyDataMessage(1, "Property1", "4");
+            var message = new IncomingMessage(1, "Property1", "4");
 
             SetupDevicesRepositoryForSender();
             SetupPropertyTypesRepositoryForSender();
@@ -187,13 +193,14 @@ namespace MjIot.EventsHandler.Tests
 
             await handler.HandleMessage();
 
-            LoggerMock.Verify(n => n.Log($"Online check failed for listener of ID = {_fixture.ConnectionWithOffilineDisabled.ListenerDevice.Id}. Message will not be sent"));
+            LoggerMock.Verify(n => n.Log($"EventHandler - Online check failed for listener of ID = {_fixture.ConnectionWithOffilineDisabled.ListenerDevice.Id}. Message will not be sent."));
+            IotServiceMock.Verify(n => n.SendToListenerAsync(It.IsAny<MessageForListener>()), Times.Never());
         }
 
         [Fact]
         public async void HandleMessage_ListenerCanOnlyReceiveMessagesWhileBeingOnlineAndItIsOnline_MessageSendingIsExecuted()
         {
-            var message = new PropertyDataMessage(1, "Property1", "4");
+            var message = new IncomingMessage(1, "Property1", "4");
 
             SetupDevicesRepositoryForSender();
             SetupPropertyTypesRepositoryForSender();
@@ -202,20 +209,45 @@ namespace MjIot.EventsHandler.Tests
             IotServiceMock = new Mock<IIotService>(MockBehavior.Loose);
             SetUpIotServiceOnlineStatusForOfflineDisabledListener(true);
 
-            var iotMessage = new IotMessage(_fixture.OfflineDisabledListenerDevice.Id.ToString(), _fixture.PropertyTypeOfOfflineDisabledListener.Name, "4");
+            var iotMessage = new MessageForListener(_fixture.OfflineDisabledListenerDevice.Id.ToString(), _fixture.PropertyTypeOfOfflineDisabledListener.Name, "4");
 
             var handler = new EventHandler(message, UnitOfWorkMock.Object, IotServiceMock.Object, LoggerMock.Object);
 
             await handler.HandleMessage();
 
-            LoggerMock.Verify(n => n.Log($"Online check passed for listener of ID = {_fixture.ConnectionWithOffilineDisabled.ListenerDevice.Id}. Message will be sent."), Times.Once());
-            IotServiceMock.Verify(n => n.SendToListenerAsync(iotMessage), Times.Once);
+            LoggerMock.Verify(n => n.Log($"EventHandler - Online check passed for listener of ID = {_fixture.ConnectionWithOffilineDisabled.ListenerDevice.Id}. Message will be sent."), Times.Once());
+            IotServiceMock.Verify(n => n.SendToListenerAsync(iotMessage), Times.Once());
+        }
+
+        [Fact]
+        public async void HandleMessage_TwoListenersAreAttachedAndOnlyOneIsCapableToReceiveMessages_MessageSentToOneAndNotSentToTheOther()
+        {
+            var message = new IncomingMessage(1, "Property1", "4");
+
+            SetupDevicesRepositoryForSender();
+            SetupPropertyTypesRepositoryForSender();
+            SetupConnectionsWithSender(ConnectionsToSetup.BothOfflineAndOnline);
+
+            IotServiceMock = new Mock<IIotService>(MockBehavior.Loose);
+            SetUpIotServiceOnlineStatusForOfflineDisabledListener(false);
+
+            var iotMessageForOfflineDisabled = new MessageForListener(_fixture.OfflineDisabledListenerDevice.Id.ToString(), _fixture.PropertyTypeOfOfflineDisabledListener.Name, "4");
+            var iotMessageForOfflineEnabled = new MessageForListener(_fixture.OfflineEnabledListenerDevice.Id.ToString(), _fixture.PropertyTypeOfOfflineEnabledListener.Name, "true");
+
+            var handler = new EventHandler(message, UnitOfWorkMock.Object, IotServiceMock.Object, LoggerMock.Object);
+
+            await handler.HandleMessage();
+
+            LoggerMock.Verify(n => n.Log($"EventHandler - Online check failed for listener of ID = {_fixture.ConnectionWithOffilineDisabled.ListenerDevice.Id}. Message will not be sent."), Times.Once());
+            IotServiceMock.Verify(n => n.SendToListenerAsync(iotMessageForOfflineDisabled), Times.Never());
+            IotServiceMock.Verify(n => n.SendToListenerAsync(iotMessageForOfflineEnabled), Times.Once());
+            IotServiceMock.Verify(n => n.SendToListenerAsync(It.IsAny<MessageForListener>()), Times.Once());
         }
 
         [Fact]
         public async void HandleMesage_TwoListenersAttachedAndBothAreCapableToReceiveMessage_MessageIsSentToBoth()
         {
-            var message = new PropertyDataMessage(1, "Property1", "4");
+            var message = new IncomingMessage(1, "Property1", "4");
 
             SetupDevicesRepositoryForSender();
             SetupPropertyTypesRepositoryForSender();
@@ -224,18 +256,18 @@ namespace MjIot.EventsHandler.Tests
             IotServiceMock = new Mock<IIotService>(MockBehavior.Loose);
             SetUpIotServiceOnlineStatusForOfflineDisabledListener(true);
 
-            var iotMessageForOfflineDisabled = new IotMessage(_fixture.OfflineDisabledListenerDevice.Id.ToString(), _fixture.PropertyTypeOfOfflineDisabledListener.Name, "4");
-            var iotMessageForOfflineEnabled = new IotMessage(_fixture.OfflineEnabledListenerDevice.Id.ToString(), _fixture.PropertyTypeOfOfflineEnabledListener.Name, "true");
+            var iotMessageForOfflineDisabled = new MessageForListener(_fixture.OfflineDisabledListenerDevice.Id.ToString(), _fixture.PropertyTypeOfOfflineDisabledListener.Name, "4");
+            var iotMessageForOfflineEnabled = new MessageForListener(_fixture.OfflineEnabledListenerDevice.Id.ToString(), _fixture.PropertyTypeOfOfflineEnabledListener.Name, "true");
 
             var handler = new EventHandler(message, UnitOfWorkMock.Object, IotServiceMock.Object, LoggerMock.Object);
 
             await handler.HandleMessage();
 
-            LoggerMock.Verify(n => n.Log($"Online check passed for listener of ID = {_fixture.ConnectionWithOffilineDisabled.ListenerDevice.Id}. Message will be sent."), Times.Once());
-            IotServiceMock.Verify(n => n.SendToListenerAsync(iotMessageForOfflineDisabled), Times.Once);
-            IotServiceMock.Verify(n => n.SendToListenerAsync(iotMessageForOfflineEnabled), Times.Once);
+            LoggerMock.Verify(n => n.Log($"EventHandler - Online check passed for listener of ID = {_fixture.ConnectionWithOffilineDisabled.ListenerDevice.Id}. Message will be sent."), Times.Once());
+            IotServiceMock.Verify(n => n.SendToListenerAsync(iotMessageForOfflineDisabled), Times.Once());
+            IotServiceMock.Verify(n => n.SendToListenerAsync(iotMessageForOfflineEnabled), Times.Once());
+            IotServiceMock.Verify(n => n.SendToListenerAsync(It.IsAny<MessageForListener>()), Times.Exactly(2));
         }
-
 
         private void SetUpIotServiceOnlineStatusForOfflineDisabledListener(bool isOnline)
         {
@@ -256,7 +288,7 @@ namespace MjIot.EventsHandler.Tests
             else if (connectionsToSetup == ConnectionsToSetup.OnlyOfflineDisabled)
                 availableConnections = new List<Connection> { _fixture.ConnectionWithOffilineDisabled };
 
-            ConnectionRepositoryMock.Setup(n => n.GetDeviceConnections(_fixture.SenderDevice))
+            ConnectionRepositoryMock.Setup(n => n.GetDeviceConnections(_fixture.SenderDeviceWithoutProps))
                 .Returns(availableConnections);
             UnitOfWorkMock.Setup(n => n.Connections).Returns(ConnectionRepositoryMock.Object);
         }
@@ -270,7 +302,8 @@ namespace MjIot.EventsHandler.Tests
 
         private void SetupDevicesRepositoryForSender()
         {
-            DeviceRepositoryMock.Setup(n => n.Get(1)).Returns(_fixture.SenderDevice);
+            DeviceRepositoryMock.Setup(n => n.Get(1)).Returns(_fixture.SenderDeviceWithoutProps);
+            DeviceRepositoryMock.Setup(n => n.GetDeviceType(_fixture.SenderDeviceWithProps.Id)).Returns(_fixture.SenderDeviceWithProps.DeviceType);
             UnitOfWorkMock.Setup(n => n.Devices).Returns(DeviceRepositoryMock.Object);
         }
 

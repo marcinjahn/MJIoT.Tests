@@ -1,10 +1,6 @@
 ﻿using MjIot.EventsHandler.ValueModifiers;
 using MjIot.Storage.Models.EF6Db;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace MjIot.EventsHandler.Tests

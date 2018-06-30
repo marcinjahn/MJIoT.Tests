@@ -76,7 +76,7 @@
     <Compile Include="FilterTests.cs" />
     <Compile Include="MessageValidatorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PropertyDataMessageTests.cs" />
+    <Compile Include="IncomingMessageTests.cs" />
     <Compile Include="ValueFormatConverterTests.cs" />
   </ItemGroup>
   <ItemGroup>
