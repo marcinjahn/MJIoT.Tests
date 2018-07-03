@@ -145,6 +145,7 @@ namespace MjIot.EventsHandler.Tests
         [InlineData("true", "false", "false")]
         [InlineData("false", "true", "true")]
         [InlineData("false", "false", "true")]
+        [InlineData("false", null, "true")]
         public void Modify_BooleanNotCalculationUsed_ReturnCorrectValue(string input, string calculationValue, string expectedResult)
         {
             var connection = GenerateConnection(ConnectionCalculation.BooleanNot, calculationValue);
@@ -158,7 +159,6 @@ namespace MjIot.EventsHandler.Tests
         [InlineData("2", "0")]
         [InlineData("qwerty", "0")]
         [InlineData("2", "qwerty")]
-        [InlineData("true", "qwerty")]
         public void Modify_BooleanNotCalculationUsed_ExceptionThrown(string input, string calculationValue)
         {
             var connection = GenerateConnection(ConnectionCalculation.BooleanNot, calculationValue);
