@@ -210,6 +210,40 @@ namespace MjIot.EventsHandler.Tests
             Assert.Equal(expectedResult, result);
         }
 
+        [Theory]
+        [InlineData("2", "x+4", "6")]
+        [InlineData("2", "x*7-5", "9")]
+        [InlineData("true", "x&false", "false")]
+        [InlineData("true", "x&true&(5-4 == 1)", "true")]
+        [InlineData("9", "Math.Sqrt(x)", "3")]  //klasa Math
+        [InlineData("9", "Math.Sqrt(x) + x", "12")] //dwukrotne użycie input
+        [InlineData("qwerty", "char[] charArray = x.ToCharArray(); Array.Reverse( charArray ); return new string( charArray );", "ytrewq")] //complex operation
+        [InlineData("qwerty", "123456", "123456")] //zamiana stringa wejściowego na zupełnie inny
+        public void Modify_CustomCalculationUsed_ReturnCorrectValue(string input, string calculationScript, string expectedResult)
+        {
+            var connection = GenerateConnection(ConnectionCalculation.Custom, calculationScript);
+
+            var result = _calculation.Modify(input, connection);
+
+            Assert.Equal(expectedResult, result);
+        }
+
+
+        [Theory]
+        [InlineData("3", "qwerty+7")]
+        [InlineData("qwerty", "(x+7)/20")]
+        public void Modify_CustomCalculationUsedWithWrongData_ExceptionThrown(string input, string calculationScript)
+        {
+            var connection = GenerateConnection(ConnectionCalculation.Custom, calculationScript);
+
+            Assert.Throws<NotSupportedException>(() => _calculation.Modify(input, connection));
+        }
+
+
+
+
+
+
         private Connection GenerateConnection(ConnectionCalculation calculationType, string calculationValue)
         {
             return new Connection
