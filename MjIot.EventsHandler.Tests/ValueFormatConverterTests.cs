@@ -171,7 +171,6 @@ namespace MjIot.EventsHandler.Tests
 
         [Theory]
         [InlineData("qwerty")]
-        [InlineData("12")]
         public void Modify_BooleanToNumber_ExceptionThrown(string input)
         {
             var connection = GenerateConnection(PropertyFormat.Boolean, PropertyFormat.Number);
