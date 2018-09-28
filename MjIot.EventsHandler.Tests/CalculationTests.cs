@@ -1,6 +1,8 @@
 ﻿using MjIot.EventsHandler.ValueModifiers;
 using MjIot.Storage.Models.EF6Db;
 using System;
+using System.Globalization;
+using System.Threading;
 using Xunit;
 
 namespace MjIot.EventsHandler.Tests
@@ -12,13 +14,14 @@ namespace MjIot.EventsHandler.Tests
         public CalculationTests()
         {
             _calculation = new Calculation();
+            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
         }
 
         [Theory]
         [InlineData("0", "1", "1")]
         [InlineData("1", "0", "1")]
         [InlineData("2", "1", "3")]
-        [InlineData("1.1", "2.2", "3,3")]
+        [InlineData("1.1", "2,2", "3.3")]
         [InlineData("7", "-8", "-1")]
         public void Modify_AdditionCalculationUsed_ReturnCorrectValue(string input, string calculationValue, string expectedResult)
         {
@@ -43,7 +46,7 @@ namespace MjIot.EventsHandler.Tests
         [InlineData("0", "1", "-1")]
         [InlineData("1", "0", "1")]
         [InlineData("2", "1", "1")]
-        [InlineData("1.1", "2.2", "-1,1")]
+        [InlineData("1.1", "2,2", "-1.1")]
         [InlineData("7", "-8", "15")]
         public void Modify_SubtractionCalculationUsed_ReturnCorrectValue(string input, string calculationValue, string expectedResult)
         {
@@ -68,7 +71,7 @@ namespace MjIot.EventsHandler.Tests
         [InlineData("0", "1", "0")]
         [InlineData("1", "0", "0")]
         [InlineData("2", "1", "2")]
-        [InlineData("1.1", "2.2", "2,42")]
+        [InlineData("1,1", "2.2", "2.42")]
         [InlineData("7", "-8", "-56")]
         public void Modify_ProductCalculationUsed_ReturnCorrectValue(string input, string calculationValue, string expectedResult)
         {
@@ -92,8 +95,8 @@ namespace MjIot.EventsHandler.Tests
         [Theory]
         [InlineData("0", "1", "0")]
         [InlineData("2", "1", "2")]
-        [InlineData("1.1", "2.2", "0,5")]
-        [InlineData("7", "-2", "-3,5")]
+        [InlineData("1,1", "2.2", "0.5")]
+        [InlineData("7", "-2", "-3.5")]
         public void Modify_DivisionCalculationUsed_ReturnCorrectValue(string input, string calculationValue, string expectedResult)
         {
             var connection = GenerateConnection(ConnectionCalculation.Division, calculationValue);

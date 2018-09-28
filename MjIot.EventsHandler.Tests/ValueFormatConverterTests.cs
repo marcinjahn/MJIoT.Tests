@@ -17,8 +17,8 @@ namespace MjIot.EventsHandler.Tests
         [Theory]
         [InlineData("1", "1")]
         [InlineData("0", "0")]
-        [InlineData("2.4", "2,4")]
-        [InlineData("16.54", "16,54")]
+        [InlineData("2.4", "2.4")]
+        [InlineData("16,54", "16.54")]
         [InlineData("-44", "-44")]
         public void Modify_NumberToNumber_SameValueReturned(string input, string expectedResult)
         {
@@ -42,8 +42,8 @@ namespace MjIot.EventsHandler.Tests
         [Theory]
         [InlineData("1", "1")]
         [InlineData("0", "0")]
-        [InlineData("2.4", "2,4")]
-        [InlineData("16.54", "16,54")]
+        [InlineData("2.4", "2.4")]
+        [InlineData("16,54", "16.54")]
         [InlineData("-44", "-44")]
         public void Modify_NumberToString_SameValueReturned(string input, string expectedResult)
         {
@@ -92,8 +92,8 @@ namespace MjIot.EventsHandler.Tests
         [Theory]
         [InlineData("1", "1")]
         [InlineData("0", "0")]
-        [InlineData("2.4", "2,4")]
-        [InlineData("16.54", "16,54")]
+        [InlineData("2.4", "2.4")]
+        [InlineData("16,54", "16.54")]
         [InlineData("-44", "-44")]
         public void Modify_StringToNumber_SameValueReturned(string input, string expectedResult)
         {

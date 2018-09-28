@@ -2,12 +2,19 @@
 using MjIot.EventsHandler.Services;
 using MjIot.Storage.Models.EF6Db;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Threading;
 using Xunit;
 
 namespace MjIot.EventsHandler.Tests
 {
     public class MessageValidatorTests
     {
+        public MessageValidatorTests()
+        {
+            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
+        }
+
         [Theory]
         [MemberData(nameof(GetIsMessageValidTestData))]
         public void IsMessageValid_VariousExamplesProvided_ReturnCorrectResult(IncomingMessage message, PropertyFormat format, bool expectedResult)
